@@ -19,52 +19,38 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '20'
-          cache: 'npm'
 
       - name: Install Dependencies
-        run: npm ci
+        working-directory: client
+        run: npm install
 
       - name: Build Vite App
+        working-directory: client
         run: npm run build
         env:
           NODE_ENV: production
 
       - name: Generate Bundle Stats
+        working-directory: client
         run: |
           node -e "
           const fs = require('fs');
           const path = require('path');
-          const walk = (dir) => {
-            let results = [];
-            try {
-              fs.readdirSync(dir, { withFileTypes: true }).forEach(e => {
-                const p = path.join(dir, e.name);
-                if (e.isDirectory()) results = results.concat(walk(p));
-                else {
-                  const ext = path.extname(e.name).toLowerCase();
-                  if (['.js', '.mjs', '.cjs', '.css'].includes(ext)) {
-                    results.push({
-                      name: path.relative('dist', p).split(path.sep).join('/'),
-                      size: fs.statSync(p).size
-                    });
-                  }
-                }
-              });
-            } catch (err) {}
-            return results;
-          };
-          const assets = walk('dist');
-          if (assets.length === 0) {
-            console.error('No bundle files found in dist/!');
-            process.exit(1);
-          }
-          fs.writeFileSync('dist/stats.json', JSON.stringify({ assets }, null, 2));
+          const candidates = ['dist', 'build', 'out'];
+          const distDir = candidates.find(d => fs.existsSync(d)) || 'dist';
+          const walk = (dir) => { let r = []; try { fs.readdirSync(dir, {withFileTypes:true}).forEach(e => { const p = path.join(dir, e.name); if (e.isDirectory()) r = r.concat(walk(p)); else if (['.js','.mjs','.cjs','.css'].includes(path.extname(e.name).toLowerCase())) r.push({name:path.relative(distDir,p).split(path.sep).join('/'),size:fs.statSync(p).size}); }); } catch(_) {} return r; };
+          const assets = walk(distDir);
+          fs.mkdirSync(distDir, {recursive:true});
+          fs.writeFileSync(path.join(distDir,'stats.json'), JSON.stringify({assets},null,2));
+          console.log('[DeployGuard] ' + assets.length + ' bundle files, ' + (assets.reduce((s,a)=>s+a.size,0)/1024).toFixed(1) + ' KB');
           "
 
       - name: Upload Bundle Stats
         uses: actions/upload-artifact@v4
         with:
           name: bundle-stats
-          path: dist/stats.json
+          path: |
+            client/dist/stats.json
+            client/build/stats.json
           retention-days: 7
           if-no-files-found: warn
