@@ -213,6 +213,11 @@ export async function parseRepository(input) {
   const { deps } = parsePackageJson(entries);
   const entryPoints = findEntryPoints(entries);
 
+  const fileContents = {};
+  for (const entry of entries) {
+    fileContents[entry.name] = entry.text;
+  }
+
   return {
     name: input.file
       ? input.file.name.replace(/\.zip$/i, "")
@@ -223,6 +228,7 @@ export async function parseRepository(input) {
     scores: { readiness: 50, security: 50, maintainability: 50, coverage: 30, techDebt: 50, risk: 50, complexity: 50 },
     entryPoints,
     fileTree,
+    fileContents,
     securityIssues: [],
     bugs: [],
     complexFunctions: [],

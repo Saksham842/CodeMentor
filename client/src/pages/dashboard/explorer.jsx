@@ -9,7 +9,7 @@ import { Card } from "@/components/ui/Card";
 
 function ExplorerContent() {
   const { project } = useProject();
-  const searchParams = useSearchParams();
+  const [searchParams] = useSearchParams();
   const fileParam = searchParams.get("file");
 
   const [selectedFile, setSelectedFile] = useState("src/lib/auth.ts");

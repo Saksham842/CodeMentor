@@ -2,7 +2,7 @@ import { useState, useRef } from "react";
 import { Send, CornerDownLeft } from "lucide-react";
 import { Button } from "../ui/Button";
 
-export function ChatInput({ onSend, isLoading, placeholder = "Ask the Oracle anything about NexaCommerce..." }) {
+export function ChatInput({ onSend, isLoading, placeholder = "Ask the Oracle anything about the codebase..." }) {
   const [text, setText] = useState("");
   const inputRef = useRef(null);
 

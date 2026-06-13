@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { UploadModal } from "@/components/upload/UploadModal";
 import { ChevronDown, ArrowRight, Shield, Activity, Sparkles, Terminal, Rocket, Database, Lock, Eye, BookOpen, Heart, Award, Compass, MessageSquareCode, Clock } from "lucide-react";
+import LiveFileTree from "@/components/landing/LiveFileTree";
 
 export default function LandingPage() {
   const [showUpload, setShowUpload] = useState(false);
@@ -102,9 +103,9 @@ export default function LandingPage() {
         </Link>
 
         <div className="hidden md:flex items-center gap-8 text-xs font-display font-bold uppercase tracking-widest">
+          <a href="#structure" className="hover:text-white transition-colors">Tree</a>
           <a href="#journey" className="hover:text-white transition-colors">Journey</a>
           <a href="#features" className="hover:text-white transition-colors">Chapters</a>
-          <a href="#preview" className="hover:text-white transition-colors">Demo</a>
         </div>
 
         <div className="flex items-center gap-4">
@@ -185,6 +186,52 @@ export default function LandingPage() {
         <div className="absolute bottom-10 flex flex-col items-center gap-1 text-[10px] uppercase font-bold tracking-widest text-stardust/40 cursor-pointer hover:text-white transition-colors">
           <span>Scroll to begin journey</span>
           <ChevronDown className="w-5 h-5 animate-bounce" />
+        </div>
+      </section>
+
+      <section id="structure" className="py-24 px-8 border-t border-rift bg-void/30 relative z-10">
+        <div className="max-w-7xl mx-auto space-y-12">
+          <div className="text-center">
+            <span className="text-[10px] font-display font-bold uppercase tracking-[0.25em] text-solar">LIVE PREVIEW</span>
+            <h2 className="text-3xl font-display font-bold text-white mt-1 uppercase tracking-wide">
+              Your Codebase, Visualized
+            </h2>
+            <p className="text-sm text-stardust/60 mt-3 max-w-xl mx-auto">
+              Watch your project structure scaffold itself in real time. Every folder, every file — decoded instantly.
+            </p>
+          </div>
+
+          <div className="flex flex-col lg:flex-row gap-8 max-w-5xl mx-auto items-start">
+            <div className="flex-1 w-full lg:max-w-md xl:max-w-lg">
+              <LiveFileTree />
+            </div>
+            <div className="flex-1 space-y-5">
+              <div className="rounded-lg bg-cavern/30 border border-rift p-5">
+                <h3 className="text-xs font-display font-bold uppercase tracking-wider text-white mb-2">
+                  ⚡ Real-Time Parsing
+                </h3>
+                <p className="text-sm text-stardust/70 leading-relaxed">
+                  Upload any ZIP or GitHub repository. CodeMentor AI extracts every file, folder, and dependency — building a complete live tree of your project in seconds.
+                </p>
+              </div>
+              <div className="rounded-lg bg-cavern/30 border border-rift p-5">
+                <h3 className="text-xs font-display font-bold uppercase tracking-wider text-white mb-2">
+                  🧠 AI-Enhanced Navigation
+                </h3>
+                <p className="text-sm text-stardust/70 leading-relaxed">
+                  Click any file to get AI explanations of its purpose, functions, and relationships. Explore unfamiliar codebases with zero onboarding.
+                </p>
+              </div>
+              <div className="rounded-lg bg-cavern/30 border border-rift p-5">
+                <h3 className="text-xs font-display font-bold uppercase tracking-wider text-white mb-2">
+                  🗂️ Full Project Awareness
+                </h3>
+                <p className="text-sm text-stardust/70 leading-relaxed">
+                  The file tree powers every feature — chat, search, security scans, interviews, and docs. One upload unlocks the entire toolkit.
+                </p>
+              </div>
+            </div>
+          </div>
         </div>
       </section>
 

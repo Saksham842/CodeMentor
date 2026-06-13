@@ -18,8 +18,8 @@ export default function ChatPage() {
         </p>
 
         <ChatInterface
-          systemPrompt={SYSTEM_PROMPTS.chat}
-          projectName={project?.name || ""}
+          systemPrompt={SYSTEM_PROMPTS.chat(buildContextString(project))}
+          projectName={project?.name || "this project"}
           projectContext={buildContextString(project)}
           onCitationClick={(path) => {
             window.location.href = `/dashboard/explorer?file=${encodeURIComponent(path)}`;
