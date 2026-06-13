@@ -99,6 +99,18 @@ The frontend runs on **http://localhost:5173** and the backend on **http://local
 ```bash
 npm run build       # Builds client to client/dist/
 npm start           # Serves client/dist via Express on port 3001
+
+### Docker
+
+```bash
+# Production mode (serves built app on port 3001)
+docker compose up
+
+# Development mode (Vite hot-reload on 5173 + Express on 3001)
+docker compose --profile dev up
+
+# Rebuild after dependency changes
+docker compose build
 ```
 
 ### Scripts
