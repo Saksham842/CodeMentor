@@ -1,0 +1,70 @@
+name: DeployGuard Bundle Stats
+
+on:
+  pull_request:
+    branches: ['**']
+  push:
+    branches: [main, master]
+
+jobs:
+  bundle-stats:
+    runs-on: ubuntu-latest
+    name: Upload bundle stats for DeployGuard
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install Dependencies
+        run: npm ci
+
+      - name: Build Vite App
+        run: npm run build
+        env:
+          NODE_ENV: production
+
+      - name: Generate Bundle Stats
+        run: |
+          node -e "
+          const fs = require('fs');
+          const path = require('path');
+          const walk = (dir) => {
+            let results = [];
+            try {
+              fs.readdirSync(dir, { withFileTypes: true }).forEach(e => {
+                const p = path.join(dir, e.name);
+                if (e.isDirectory()) results = results.concat(walk(p));
+                else {
+                  const ext = path.extname(e.name).toLowerCase();
+                  if (['.js', '.mjs', '.cjs', '.css'].includes(ext)) {
+                    results.push({
+                      name: path.relative('dist', p).split(path.sep).join('/'),
+                      size: fs.statSync(p).size
+                    });
+                  }
+                }
+              });
+            } catch (err) {}
+            return results;
+          };
+          const assets = walk('dist');
+          if (assets.length === 0) {
+            console.error('No bundle files found in dist/!');
+            process.exit(1);
+          }
+          fs.writeFileSync('dist/stats.json', JSON.stringify({ assets }, null, 2));
+          "
+
+      - name: Upload Bundle Stats
+        uses: actions/upload-artifact@v4
+        with:
+          name: bundle-stats
+          path: dist/stats.json
+          retention-days: 7
+          if-no-files-found: warn
