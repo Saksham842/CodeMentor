@@ -1,6 +1,8 @@
 const express = require("express");
 const cors = require("cors");
 const path = require("path");
+const dotenv = require("dotenv");
+dotenv.config({ path: path.join(__dirname, "..", ".env") });
 const { errorHandler } = require("./middleware/errorHandler");
 const grokRoutes = require("./routes/grok");
 const projectRoutes = require("./routes/project");

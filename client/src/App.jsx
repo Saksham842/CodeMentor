@@ -2,6 +2,7 @@ import { lazy, Suspense } from "react";
 import { Routes, Route } from "react-router-dom";
 import { Layout } from "./components/layout/Layout";
 import { Spinner } from "./components/ui/Spinner";
+import { ErrorBoundary } from "./components/ErrorBoundary";
 
 const LandingPage = lazy(() => import("./pages/page"));
 const LoginPage = lazy(() => import("./pages/(auth)/login"));
@@ -45,7 +46,7 @@ export default function App() {
           <Route index element={<LandingPage />} />
           <Route path="login" element={<LoginPage />} />
           <Route path="register" element={<RegisterPage />} />
-          <Route path="dashboard" element={<DashboardLayout />}>
+          <Route path="dashboard" element={<ErrorBoundary><DashboardLayout /></ErrorBoundary>}>
             <Route index element={<DashboardOverview />} />
             <Route path="chat" element={<ChatPage />} />
             <Route path="explorer" element={<ExplorerPage />} />

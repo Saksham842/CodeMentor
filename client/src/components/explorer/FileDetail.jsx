@@ -1,81 +1,33 @@
 import { useState } from "react";
-import { Card } from "../ui/Card";
+import { useProject } from "@/hooks/useProject";
 import { Button } from "../ui/Button";
 import { CodeBlock } from "../ui/CodeBlock";
 import { SlideOver } from "../ui/SlideOver";
-import { Badge } from "../ui/Badge";
-import { Sparkles, Library, RefreshCw } from "lucide-react";
+import { Sparkles, RefreshCw, FileCode2 } from "lucide-react";
 import { showToast } from "../ui/Toast";
 
+function findInTree(node, targetPath) {
+  if (node.path === targetPath) return node;
+  if (node.children) {
+    for (const child of node.children) {
+      const found = findInTree(child, targetPath);
+      if (found) return found;
+    }
+  }
+  return null;
+}
+
 export function FileDetail({ filePath }) {
+  const { project } = useProject();
   const [showAIExplainer, setShowAIExplainer] = useState(false);
   const [aiContent, setAiContent] = useState("");
   const [loadingExplainer, setLoadingExplainer] = useState(false);
 
-  const getFileData = () => {
-    if (filePath.includes("auth.ts")) {
-      return {
-        purpose: "Orchestrates authentication checks, hashes client passwords, and signs JWT tokens.",
-        responsibilities: [
-          "Verifies user credentials on authentication requests.",
-          "Establishes cryptographically signed JWT hashes.",
-          "Exposes login credentials providers for NextAuth hooks."
-        ],
-        functions: [
-          { name: "authorizeUserCredentials", purpose: "Authenticates request emails against PostgreSQL hashes.", lines: 70 },
-          { name: "generateTokenClaims", purpose: "Populates role properties onto cookie tokens.", lines: 35 },
-          { name: "verifyPasswordHash", purpose: "Compares clean passwords to BCrypt hashes.", lines: 20 }
-        ],
-        dependencies: ["next-auth", "bcrypt", "prisma"],
-        relationships: ["src/app/api/auth/[...nextauth]/route.ts", "src/middleware.ts"],
-        code: `import NextAuth from "next-auth";
-import CredentialsProvider from "next-auth/providers/credentials";
-import { prisma } from "./prisma";
-import bcrypt from "bcrypt";
+  const fileNode = project?.fileTree ? findInTree(project.fileTree, filePath) : null;
+  const fileExt = filePath.split(".").pop();
+  const fileName = filePath.split("/").pop();
 
-export const authOptions = {
-  providers: [
-    CredentialsProvider({
-      name: "Credentials",
-      async authorize(credentials) {
-        if (!credentials?.email || !credentials?.password) return null;
-        
-        const user = await prisma.user.findUnique({
-          where: { email: credentials.email }
-        });
-        if (!user) return null;
-
-        const isValid = await bcrypt.compare(credentials.password, user.passwordHash);
-        if (!isValid) return null;
-
-        return { id: user.id, name: user.name, email: user.email };
-      }
-    })
-  ],
-  session: { strategy: "jwt" }
-};`
-      };
-    }
-    
-    return {
-      purpose: "Exposes codebase utility interfaces and functions.",
-      responsibilities: [
-        "Provides modular helper abstractions.",
-        "Drives system logic execution."
-      ],
-      functions: [
-        { name: "defaultHandler", purpose: "Default fallback handler for file requests.", lines: 15 }
-      ],
-      dependencies: ["lodash", "typescript"],
-      relationships: ["src/app/page.tsx"],
-      code: `// File details for ${filePath}
-export function defaultHandler() {
-  console.log("Analyzing file contents...");
-}`
-    };
-  };
-
-  const fileInfo = getFileData();
+  const fileContent = project?.fileContents?.[filePath];
 
   const handleAIExplain = async () => {
     setLoadingExplainer(true);
@@ -85,7 +37,8 @@ export function defaultHandler() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          prompt: `Teach the contents and responsibilities of the file: ${filePath}. Code context: ${fileInfo.code}`,
+          prompt: `Explain the contents and purpose of the file "${filePath}" in this project.\nProject: ${project?.name || "unknown"}\nTech stack: ${Object.values(project?.stack || {}).flat().join(", ") || "unknown"}${fileContent ? `\n\nFile content:\n${fileContent.slice(0, 3000)}` : ""}`,
+          projectContext: { name: project?.name, stack: project?.stack, stats: project?.stats },
         })
       });
       if (!res.ok) throw new Error("Grok service connection failure.");
@@ -93,7 +46,7 @@ export function defaultHandler() {
       setAiContent(data.result);
     } catch (err) {
       showToast.error("Failed to fetch AI explanation: " + err.message);
-      setAiContent("Failed to load AI response. Please check your GROQ_API_KEY environment variable settings.");
+      setAiContent("Failed to load AI response. Check your GROQ_API_KEY.");
     } finally {
       setLoadingExplainer(false);
     }
@@ -102,102 +55,70 @@ export function defaultHandler() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between border-b border-rift pb-4">
-        <div>
-          <h2 className="text-xl font-display font-bold text-white">{filePath.split("/").pop()}</h2>
-          <span className="text-xs font-mono text-comet">{filePath}</span>
+        <div className="flex items-center gap-3">
+          <FileCode2 className="w-6 h-6 text-nebula" />
+          <div>
+            <h2 className="text-xl font-display font-bold text-white">{fileName}</h2>
+            <span className="text-xs font-mono text-comet">{filePath}</span>
+          </div>
         </div>
-        
         <Button
           onClick={handleAIExplain}
           className="flex items-center gap-1.5 shadow-md"
           size="sm"
         >
           <Sparkles className="w-3.5 h-3.5" />
-          <span>Explain with Grok</span>
+          <span>Explain with AI</span>
         </Button>
       </div>
 
-      <Card className="p-5">
-        <h3 className="text-xs font-display font-bold uppercase tracking-wider text-white mb-2">
-          📜 Scroll Objective
-        </h3>
-        <p className="text-sm text-stardust leading-relaxed">{fileInfo.purpose}</p>
-      </Card>
-
-      <Card className="p-5">
-        <h3 className="text-xs font-display font-bold uppercase tracking-wider text-white mb-3">
-          ⚡ Key Duties
-        </h3>
-        <ul className="space-y-2 text-sm text-stardust">
-          {fileInfo.responsibilities.map((resp, index) => (
-            <li key={index} className="flex gap-2 items-start">
-              <span className="text-nebula text-[10px] mt-1">⬡</span>
-              <span>{resp}</span>
-            </li>
-          ))}
-        </ul>
-      </Card>
-
-      <div className="overflow-x-auto border border-rift rounded-xl bg-cavern/40">
-        <table className="w-full text-left text-xs font-mono">
-          <thead className="bg-void/40 border-b border-rift text-comet font-display uppercase font-semibold">
-            <tr>
-              <th className="px-4 py-3">Function Name</th>
-              <th className="px-4 py-3">Description</th>
-              <th className="px-4 py-3 text-right">LOC</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-rift text-stardust">
-            {fileInfo.functions.map((fn) => (
-              <tr key={fn.name} className="hover:bg-rift/10">
-                <td className="px-4 py-3 text-white font-semibold">{fn.name}()</td>
-                <td className="px-4 py-3">{fn.purpose}</td>
-                <td className="px-4 py-3 text-right text-comet">{fn.lines}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <Card className="p-4">
-          <h4 className="text-[10px] font-display font-bold uppercase tracking-wider text-white mb-2">
-            📦 Import Dependencies
-          </h4>
-          <div className="flex flex-wrap gap-1.5">
-            {fileInfo.dependencies.map((dep) => (
-              <Badge key={dep} variant="comet">
-                {dep}
-              </Badge>
-            ))}
+      {fileNode && (
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          <div className="rounded-lg bg-cavern/40 border border-rift p-3 text-center">
+            <p className="text-[10px] font-display font-bold uppercase tracking-wider text-comet mb-1">Type</p>
+            <p className="text-sm font-mono text-white">{fileNode.type}</p>
           </div>
-        </Card>
-        
-        <Card className="p-4">
-          <h4 className="text-[10px] font-display font-bold uppercase tracking-wider text-white mb-2">
-            🔗 System Connections
-          </h4>
-          <div className="flex flex-wrap gap-1.5">
-            {fileInfo.relationships.map((rel) => (
-              <Badge key={rel} variant="nebula">
-                {rel.split("/").pop() || rel}
-              </Badge>
-            ))}
+          <div className="rounded-lg bg-cavern/40 border border-rift p-3 text-center">
+            <p className="text-[10px] font-display font-bold uppercase tracking-wider text-comet mb-1">Extension</p>
+            <p className="text-sm font-mono text-white">.{fileExt}</p>
           </div>
-        </Card>
-      </div>
+          {fileNode.size && (
+            <div className="rounded-lg bg-cavern/40 border border-rift p-3 text-center">
+              <p className="text-[10px] font-display font-bold uppercase tracking-wider text-comet mb-1">Size</p>
+              <p className="text-sm font-mono text-white">{fileNode.size} chars</p>
+            </div>
+          )}
+          <div className="rounded-lg bg-cavern/40 border border-rift p-3 text-center">
+            <p className="text-[10px] font-display font-bold uppercase tracking-wider text-comet mb-1">Language</p>
+            <p className="text-sm font-mono text-white">{fileNode.language || "text"}</p>
+          </div>
+        </div>
+      )}
 
-      <div className="space-y-2">
-        <h3 className="text-xs font-display font-bold uppercase tracking-wider text-white">
-          💻 Code Snippet
-        </h3>
-        <CodeBlock code={fileInfo.code} language="typescript" showLineNumbers />
-      </div>
+      {fileContent ? (
+        <div className="space-y-2">
+          <h3 className="text-xs font-display font-bold uppercase tracking-wider text-white">
+            💻 Source Code
+          </h3>
+          <CodeBlock code={fileContent} language={fileExt} showLineNumbers />
+        </div>
+      ) : (
+        <div className="rounded-lg bg-cavern/20 border border-dashed border-rift p-8 text-center space-y-3">
+          <Sparkles className="w-8 h-8 text-nebula/50 mx-auto" />
+          <p className="text-sm text-stardust/60">
+            {fileNode ? "File content is only available in the current session." : "Select a file from the tree to see its details."} Use the AI explainer below.
+          </p>
+          <Button onClick={handleAIExplain} variant="secondary" size="sm">
+            <Sparkles className="w-3.5 h-3.5 mr-1.5" />
+            Explain with Grok
+          </Button>
+        </div>
+      )}
 
       <SlideOver
         isOpen={showAIExplainer}
         onClose={() => setShowAIExplainer(false)}
-        title={`AI Explainer: ${filePath.split("/").pop()}`}
+        title={`AI Explainer: ${fileName}`}
       >
         {loadingExplainer ? (
           <div className="flex flex-col items-center justify-center h-[50vh] gap-3">
@@ -208,8 +129,8 @@ export function defaultHandler() {
           <div className="space-y-4 text-stardust leading-relaxed">
             {aiContent.split("\n\n").map((chunk, index) => {
               if (chunk.includes("```")) {
-                const code = chunk.replace(/```typescript|```/g, "").trim();
-                return <CodeBlock key={index} code={code} language="typescript" />;
+                const code = chunk.replace(/```\w*|```/g, "").trim();
+                return <CodeBlock key={index} code={code} language={fileExt} />;
               }
               return <p key={index} className="text-sm">{chunk}</p>;
             })}

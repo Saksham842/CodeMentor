@@ -134,7 +134,8 @@ Ask me about the architecture, security flows, or database constraints. Your que
             <button
               key={chip}
               onClick={() => handleSendMessage(chip)}
-              className="px-3 py-1.5 rounded-full border border-rift bg-cavern text-xs text-stardust hover:text-white hover:border-nebula/40 transition-all shrink-0 cursor-pointer"
+              disabled={isLoading}
+              className="px-3 py-1.5 rounded-full border border-rift bg-cavern text-xs text-stardust hover:text-white hover:border-nebula/40 transition-all shrink-0 cursor-pointer disabled:opacity-40 disabled:pointer-events-none"
             >
               {chip}
             </button>

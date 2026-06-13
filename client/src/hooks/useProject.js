@@ -15,6 +15,7 @@ export function useProject() {
     analysisProgress: mounted ? store.analysisProgress : 0,
     analysisMessage: mounted ? store.analysisMessage : "",
     hasProject: mounted ? store.hasProject : false,
+    fileContents: mounted ? store.project?.fileContents || {} : {},
     setProject: store.setProject,
     startAnalysis: store.startAnalysis,
     updateProgress: store.updateProgress,
