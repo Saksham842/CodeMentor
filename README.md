@@ -27,12 +27,17 @@ Built with **React + Vite** frontend, **Express** backend, and **Groq** for AI i
 | **Roadmap / Timeline** | Visualize tech debt, milestones, and project evolution |
 | **Search** | Semantic code search with ranked file-level results |
 | **Security Gaps** | Targeted gap analysis across categories like auth, caching, deployment |
+| **Live Folder Structure** | Interactive, animated visual file tree scaffolding in real-time on the landing page |
+| **DeployGuard CI** | Integration with DeployGuard GitHub App for automated bundle size regression analysis on PRs |
 
 ---
 
 ## Project Structure
 
 ```
+├── .github/
+│   └── workflows/
+│       └── deployguard.yml    # DeployGuard bundle stats CI integration
 ├── client/                    # Frontend (React + Vite)
 │   └── src/
 │       ├── App.jsx            # Root router with lazy-loaded routes
@@ -43,6 +48,7 @@ Built with **React + Vite** frontend, **Express** backend, and **Groq** for AI i
 │       │   ├── charts/        # BarChart, ComplexityRings, RadarChart
 │       │   ├── chat/          # ChatInput, ChatInterface, ChatMessage, FileCitation
 │       │   ├── explorer/      # FileDetail, FileTree
+│       │   ├── landing/       # LiveFileTree (interactive landing page visualization)
 │       │   ├── interview/     # IntensityMeter, InterviewChat, PersonaSelector
 │       │   ├── layout/        # Header, Layout, PageWrapper, SectionHeader, Sidebar
 │       │   ├── resume/        # BulletEditor, ExportButtons
@@ -63,7 +69,11 @@ Built with **React + Vite** frontend, **Express** backend, and **Groq** for AI i
 │   ├── services/              # grokService.js, promptService.js
 │   └── middleware/            # errorHandler.js
 ├── uploads/                   # Temporary upload storage
+├── .dockerignore              # Excludes modules & environment from build
 ├── .env                       # Environment variables
+├── Dockerfile                 # Production multi-stage Docker build
+├── Dockerfile.dev             # Development Docker container
+├── docker-compose.yml         # Compose configuration for dev & prod
 ├── package.json               # Scripts and dependencies
 └── README.md
 ```
@@ -180,6 +190,24 @@ Groq provides fast inference on open-source models with generous free tier quota
 - **Express 5** — API server
 - **Multer** — file upload handling
 - **CORS** — cross-origin support
+
+### Tooling & DevOps
+- **Docker & Docker Compose** — Containerized environment configurations
+- **Concurrently** — Concurrently runs the React Vite client and Express API server
+- **DeployGuard** — Automated bundle-size regression check-gates on PRs
+
+---
+
+## 🛡️ DeployGuard CI Integration
+
+CodeMentor AI is configured with **DeployGuard** to prevent bundle size regressions before code is merged:
+
+- **Workflow File**: [.github/workflows/deployguard.yml](file:///c:/Users/acer/Desktop/DATA/interview%20project/.github/workflows/deployguard.yml)
+- **Mechanism**:
+  1. On pull requests and merges to `main`/`master`, the action installs dependencies and runs `npm run build`.
+  2. A Node script in the runner scans the output `dist` folder to calculate JS/CSS assets and outputs a `stats.json` summary.
+  3. Uploads the results as a `bundle-stats` artifact.
+  4. The DeployGuard GitHub App parses these stats, determines regressions against branch baselines, and reports Check Run statuses and details directly inside GitHub PR comments with Groq AI analysis.
 
 ---
 
